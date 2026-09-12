@@ -239,7 +239,7 @@ const q=(sales||[]).reduce((a,x)=>a+Number(x.quantity||0),0);
 totalQ+=q;
 totalA+=q*Number(b.price||0);
 
-html+=bookHtml(b,q);
+html+=bookHtml(b,q,sales);
 }
 
 $("detailBookCount").textContent=(books||[]).length;
@@ -248,16 +248,31 @@ $("detailAmount").textContent=yen(totalA);
 $("bookList").innerHTML=html||"<div class='muted'>まだ商品がありません。</div>";
 }
 
-function bookHtml(b,q){
-return `
+function bookHtml(b,q,sales=[]){
+  const history=(sales||[]).map(s=>`
+    <div class="muted">
+      ${new Date(s.sold_at).toLocaleDateString("ja-JP")}　
+      ${Number(s.quantity)}冊
+    </div>
+  `).join("");
+
+  return `
 <div class="bookrow">
 <div style="flex:1">
 <div class="title">${esc(b.title)}</div>
 <div class="muted">${esc(b.author||"著者未登録")} / ISBN ${esc(b.isbn)} / ${yen(b.price)}</div>
+
 <div style="margin-top:6px">
 <span class="badge">累計 ${q}冊</span>
 <span class="badge">${yen(q*Number(b.price||0))}</span>
 </div>
+
+${history ? `
+<div style="margin-top:10px">
+<div class="muted" style="font-weight:700;margin-bottom:4px">販売実績</div>
+${history}
+</div>
+` : ""}
 
 <div class="salesline">
 <input id="q_${b.id}" class="input" type="number" min="0" value="1">
