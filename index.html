@@ -379,45 +379,97 @@ await refreshDetail();
 }
 
 async function lookup(){
-const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
+  const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
 
-if(isbn.length!==13){
-alert("ISBN-13を入力してください");
-return;
+  if(!/^\d{13}$/.test(isbn)){
+    alert("ISBN-13を入力してください");
+    return;
+  }
+
+  $("preview").innerHTML='<p class="muted">書籍情報を検索中…</p>';
+
+  let found=null;
+
+  // 国立国会図書館サーチ
+  try{
+    const url=
+      "https://ndlsearch.ndl.go.jp/api/opensearch"+
+      "?cnt=10"+
+      "&isbn="+encodeURIComponent(isbn);
+
+    const r=await fetch(url);
+
+    if(r.ok){
+      const text=await r.text();
+      const xml=new DOMParser().parseFromString(text,"text/xml");
+
+      const item=xml.querySelector("item");
+
+      if(item){
+        const title=item.querySelector("dc\\:title, title")?.textContent?.trim()||"";
+        const creator=item.querySelector("dc\\:creator, creator")?.textContent?.trim()||"";
+
+        if(title){
+          found={
+            title:title,
+            author:creator,
+            price:null
+          };
+        }
+      }
+    }
+  }catch(e){
+    console.log("NDL lookup:",e);
+  }
+
+  // 見つからなければGoogle Books
+  if(!found){
+    try{
+      const r=await fetch(
+        "https://www.googleapis.com/books/v1/volumes?q=isbn:"+
+        encodeURIComponent(isbn)+
+        "&country=JP&projection=full"
+      );
+
+      if(r.ok){
+        const j=await r.json();
+        const v=j.items?.[0]?.volumeInfo;
+
+        if(v){
+          found={
+            title:v.title||"",
+            author:(v.authors||[]).join("、"),
+            price:v.saleInfo?.listPrice?.amount
+              ??v.saleInfo?.retailPrice?.amount
+          };
+        }
+      }
+    }catch(e){
+      console.log("Google Books lookup:",e);
+    }
+  }
+
+  if(found){
+    $("manualTitle").value=found.title||"";
+    $("author").value=found.author||"";
+
+    if(found.price!=null && Number(found.price)>0){
+      $("price").value=Math.round(found.price);
+    }
+
+    $("preview").innerHTML=
+      '<div class="card" style="margin:8px 0;padding:10px">'+
+      '<b>'+esc(found.title)+'</b>'+
+      '<div class="muted">'+esc(found.author||"")+'</div>'+
+      '</div>';
+
+  }else{
+    $("preview").innerHTML=
+      '<div class="notice">'+
+      '書籍情報が見つかりませんでした。タイトル・著者・定価を手入力してください。'+
+      '</div>';
+  }
 }
-
-$("preview").innerHTML=
-'<p class="muted">書籍情報を取得中…</p>';
-
-try{
-const r=await fetch(
-"https://api.openbd.jp/v1/get?isbn="+encodeURIComponent(isbn)
-);
-
-const j=await r.json();
-const s=j?.[0]?.summary;
-
-if(!s)throw new Error("not found");
-
-$("manualTitle").value=s.title||"";
-$("author").value=s.author||"";
-
-$("preview").innerHTML=
-'<div class="card" style="margin:8px 0;padding:10px">'+
-'<b>'+esc(s.title||"")+'</b>'+
-'<div class="muted">'+esc(s.author||"")+'</div>'+
-'</div>';
-
-}catch(e){
-
-$("preview").innerHTML=
-'<div class="notice">'+
-'書籍情報を取得できませんでした。タイトル・著者・定価を手入力してください。'+
-'</div>';
-
-}
-}
-
 loadFairs();
 </script>
 </body>
