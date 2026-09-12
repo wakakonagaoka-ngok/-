@@ -11,13 +11,13 @@ body{margin:0;background:#f5f7fb;color:#172033;font-family:-apple-system,BlinkMa
 .wrap{max-width:980px;margin:auto;padding:18px}
 .top{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .muted{color:#6b7280;font-size:13px}
-.card{background:white;border:1px solid #e3e7ef;border-radius:14px;padding:16px;margin:14px 0;box-shadow:0 2px 10px #00000008}
+.card{background:#fff;border:1px solid #e3e7ef;border-radius:14px;padding:16px;margin:14px 0}
 h1{font-size:23px;margin:0}
 h2{font-size:18px;margin:0 0 12px}
 .stats{display:flex;gap:10px;margin:14px 0}
-.stat{background:white;border:1px solid #e3e7ef;border-radius:12px;padding:12px 16px;flex:1}
+.stat{background:#fff;border:1px solid #e3e7ef;border-radius:12px;padding:12px 16px;flex:1}
 .stat b{font-size:22px;display:block}
-.btn{border:0;border-radius:10px;padding:10px 14px;background:#243b64;color:#fff;font-weight:700;cursor:pointer}
+.btn{border:0;border-radius:10px;padding:10px 14px;background:#243b64;color:#fff;font-weight:700}
 .btn.sub{background:#eef2f7;color:#243047}
 .btn.danger{background:#b42318}
 .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -33,7 +33,6 @@ h2{font-size:18px;margin:0 0 12px}
 .salesline input{width:90px}
 </style>
 </head>
-
 <body>
 <div class="wrap">
 
@@ -46,7 +45,6 @@ h2{font-size:18px;margin:0 0 12px}
 </div>
 
 <div id="home">
-
 <div class="stats">
 <div class="stat"><span class="muted">フェア数</span><b id="fairCount">0</b></div>
 <div class="stat"><span class="muted">登録商品</span><b id="bookCount">0</b></div>
@@ -64,11 +62,9 @@ h2{font-size:18px;margin:0 0 12px}
 <h2>フェア一覧</h2>
 <div id="fairList" class="muted">読み込み中…</div>
 </div>
-
 </div>
 
 <div id="detail" class="hidden">
-
 <div class="card">
 <div class="row" style="justify-content:space-between;align-items:center">
 <div>
@@ -110,7 +106,6 @@ h2{font-size:18px;margin:0 0 12px}
 <h2>商品一覧</h2>
 <div id="bookList" class="muted">読み込み中…</div>
 </div>
-
 </div>
 </div>
 
@@ -122,16 +117,14 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let currentFair=null,fairs=[];
 
 const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-}[m]));
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
 const yen=n=>"¥"+(Number(n)||0).toLocaleString("ja-JP");
 
 async function loadFairs(){
 const {data,error}=await db.from("fairs").select("*").order("created_at",{ascending:true});
 if(error){alert("フェアを読み込めませんでした："+error.message);return}
 fairs=data||[];
-renderFairs();
+await renderFairs();
 }
 
 async function renderFairs(){
@@ -246,17 +239,16 @@ const q=(sales||[]).reduce((a,x)=>a+Number(x.quantity||0),0);
 totalQ+=q;
 totalA+=q*Number(b.price||0);
 
-html+=bookHtml(b,sales||[],q);
+html+=bookHtml(b,q);
 }
 
 $("detailBookCount").textContent=(books||[]).length;
 $("detailQty").textContent=totalQ.toLocaleString("ja-JP");
 $("detailAmount").textContent=yen(totalA);
-
 $("bookList").innerHTML=html||"<div class='muted'>まだ商品がありません。</div>";
 }
 
-function bookHtml(b,sales,q){
+function bookHtml(b,q){
 return `
 <div class="bookrow">
 <div style="flex:1">
@@ -387,109 +379,46 @@ await refreshDetail();
 }
 
 async function lookup(){
-  const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
+const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
 
-  if(!/^\d{13}$/.test(isbn)){
-    alert("ISBN-13を入力してください");
-    return;
-  }
+if(isbn.length!==13){
+alert("ISBN-13を入力してください");
+return;
+}
 
-  $("preview").innerHTML='<p class="muted">書籍情報を検索中…</p>';
+$("preview").innerHTML=
+'<p class="muted">書籍情報を取得中…</p>';
 
-  let found=null;
+try{
+const r=await fetch(
+"https://api.openbd.jp/v1/get?isbn="+encodeURIComponent(isbn)
+);
 
-  // ① Google Books
-  try{
-    const r=await fetch(
-      "https://www.googleapis.com/books/v1/volumes?q=isbn:"+encodeURIComponent(isbn)+"&country=JP&projection=full"
-    );
+const j=await r.json();
+const s=j?.[0]?.summary;
 
-    if(r.ok){
-      const j=await r.json();
-      const v=j.items?.[0]?.volumeInfo;
+if(!s)throw new Error("not found");
 
-      if(v){
-        found={
-          title:v.title||"",
-          author:(v.authors||[]).join("、"),
-          price:v.saleInfo?.listPrice?.amount
-            ??v.saleInfo?.retailPrice?.amount
-        };
-      }
-    }
-  }catch(e){
-    console.log("Google Books:",e);
-  }
+$("manualTitle").value=s.title||"";
+$("author").value=s.author||"";
 
-  // ② Google Booksで見つからなければOpen Library
-  if(!found){
-    try{
-      const r=await fetch(
-        "https://openlibrary.org/isbn/"+encodeURIComponent(isbn)+".json"
-      );
+$("preview").innerHTML=
+'<div class="card" style="margin:8px 0;padding:10px">'+
+'<b>'+esc(s.title||"")+'</b>'+
+'<div class="muted">'+esc(s.author||"")+'</div>'+
+'</div>';
 
-      if(r.ok){
-        const j=await r.json();
+}catch(e){
 
-        let author="";
+$("preview").innerHTML=
+'<div class="notice">'+
+'書籍情報を取得できませんでした。タイトル・著者・定価を手入力してください。'+
+'</div>';
 
-        if(j.authors?.length){
-          const names=[];
-
-          for(const a of j.authors){
-            if(a.key){
-              try{
-                const ar=await fetch(
-                  "https://openlibrary.org"+a.key+".json"
-                );
-                if(ar.ok){
-                  const aj=await ar.json();
-                  if(aj.name)names.push(aj.name);
-                }
-              }catch(e){}
-            }
-          }
-
-          author=names.join("、");
-        }
-
-        if(j.title){
-          found={
-            title:j.title,
-            author:author,
-            price:null
-          };
-        }
-      }
-    }catch(e){
-      console.log("Open Library:",e);
-    }
-  }
-
-  if(found){
-    $("manualTitle").value=found.title||"";
-    $("author").value=found.author||"";
-
-    if(found.price!=null && Number(found.price)>0){
-      $("price").value=Math.round(found.price);
-    }
-
-    $("preview").innerHTML=
-      '<div class="card" style="margin:8px 0;padding:10px">'+
-      '<b>'+esc(found.title||"")+'</b>'+
-      '<div class="muted">'+esc(found.author||"")+'</div>'+
-      '</div>';
-
-  }else{
-    $("preview").innerHTML=
-      '<div class="notice">'+
-      '書籍情報が見つかりませんでした。タイトル・著者・定価は手入力できます。'+
-      '</div>';
-  }
+}
 }
 
 loadFairs();
 </script>
-
 </body>
 </html>
