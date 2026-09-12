@@ -227,7 +227,59 @@ async function deleteFair(){
  show("home");
 }
 
-async function lookup(){
+async async function lookup(){
+  const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
+
+  if(!/^\d{13}$/.test(isbn)){
+    alert("ISBN-13を入力してください");
+    return;
+  }
+
+  $("preview").innerHTML='<p class="muted">書籍情報を取得中…</p>';
+
+  try{
+    let v=null;
+
+    // Google Books
+    try{
+      const r=await fetch(
+        "https://www.googleapis.com/books/v1/volumes?q=isbn:"+encodeURIComponent(isbn)+"&country=JP"
+      );
+      const j=await r.json();
+      v=j.items?.[0]?.volumeInfo||null;
+
+      if(v){
+        $("manualTitle").value=v.title||"";
+        $("author").value=(v.authors||[]).join("、");
+
+        const p=v.saleInfo?.listPrice?.amount
+          ??v.saleInfo?.retailPrice?.amount;
+
+        if(p!=null){
+          $("price").value=Math.round(p);
+        }
+
+        $("preview").innerHTML=
+          '<div class="book"><b>'+esc(v.title||"")+
+          '</b><div class="muted">'+
+          esc((v.authors||[]).join("、"))+
+          '</div></div>';
+
+        return;
+      }
+    }catch(e){
+      console.log("Google Books lookup failed",e);
+    }
+
+    // 見つからなかった場合
+    $("preview").innerHTML=
+      '<p class="muted">書籍情報が見つかりませんでした。タイトル・著者・定価を手入力してください。</p>';
+
+  }catch(e){
+    $("preview").innerHTML=
+      '<p class="muted">書籍情報を取得できませんでした。タイトル・著者・定価を手入力してください。</p>';
+  }
+}
  const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
 
  if(!/^\d{13}$/.test(isbn)){
