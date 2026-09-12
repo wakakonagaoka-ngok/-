@@ -387,55 +387,105 @@ await refreshDetail();
 }
 
 async function lookup(){
-const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
+  const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
 
-if(!/^\d{13}$/.test(isbn)){
-alert("ISBN-13を入力してください");
-return;
-}
+  if(!/^\d{13}$/.test(isbn)){
+    alert("ISBN-13を入力してください");
+    return;
+  }
 
-$("preview").innerHTML='<p class="muted">書籍情報を検索中…</p>';
+  $("preview").innerHTML='<p class="muted">書籍情報を検索中…</p>';
 
-let found=null;
+  let found=null;
 
-try{
-const r=await fetch(
-"https://www.googleapis.com/books/v1/volumes?q=isbn:"+encodeURIComponent(isbn)+"&country=JP&projection=full"
-);
+  // ① Google Books
+  try{
+    const r=await fetch(
+      "https://www.googleapis.com/books/v1/volumes?q=isbn:"+encodeURIComponent(isbn)+"&country=JP&projection=full"
+    );
 
-if(r.ok){
-const j=await r.json();
-const v=j.items?.[0]?.volumeInfo;
+    if(r.ok){
+      const j=await r.json();
+      const v=j.items?.[0]?.volumeInfo;
 
-if(v){
-found={
-title:v.title||"",
-author:(v.authors||[]).join("、"),
-price:v.saleInfo?.listPrice?.amount??v.saleInfo?.retailPrice?.amount
-};
-}
-}
-}catch(e){
-console.log(e);
-}
+      if(v){
+        found={
+          title:v.title||"",
+          author:(v.authors||[]).join("、"),
+          price:v.saleInfo?.listPrice?.amount
+            ??v.saleInfo?.retailPrice?.amount
+        };
+      }
+    }
+  }catch(e){
+    console.log("Google Books:",e);
+  }
 
-if(found){
-$("manualTitle").value=found.title;
-$("author").value=found.author;
+  // ② Google Booksで見つからなければOpen Library
+  if(!found){
+    try{
+      const r=await fetch(
+        "https://openlibrary.org/isbn/"+encodeURIComponent(isbn)+".json"
+      );
 
-if(found.price!=null&&Number(found.price)>0){
-$("price").value=Math.round(found.price);
-}
+      if(r.ok){
+        const j=await r.json();
 
-$("preview").innerHTML=
-`<div class="card" style="margin:8px 0;padding:10px">
-<b>${esc(found.title)}</b>
-<div class="muted">${esc(found.author)}</div>
-</div>`;
-}else{
-$("preview").innerHTML=
-'<div class="notice">書籍情報が見つかりませんでした。タイトル・著者・定価は手入力できます。</div>';
-}
+        let author="";
+
+        if(j.authors?.length){
+          const names=[];
+
+          for(const a of j.authors){
+            if(a.key){
+              try{
+                const ar=await fetch(
+                  "https://openlibrary.org"+a.key+".json"
+                );
+                if(ar.ok){
+                  const aj=await ar.json();
+                  if(aj.name)names.push(aj.name);
+                }
+              }catch(e){}
+            }
+          }
+
+          author=names.join("、");
+        }
+
+        if(j.title){
+          found={
+            title:j.title,
+            author:author,
+            price:null
+          };
+        }
+      }
+    }catch(e){
+      console.log("Open Library:",e);
+    }
+  }
+
+  if(found){
+    $("manualTitle").value=found.title||"";
+    $("author").value=found.author||"";
+
+    if(found.price!=null && Number(found.price)>0){
+      $("price").value=Math.round(found.price);
+    }
+
+    $("preview").innerHTML=
+      '<div class="card" style="margin:8px 0;padding:10px">'+
+      '<b>'+esc(found.title||"")+'</b>'+
+      '<div class="muted">'+esc(found.author||"")+'</div>'+
+      '</div>';
+
+  }else{
+    $("preview").innerHTML=
+      '<div class="notice">'+
+      '書籍情報が見つかりませんでした。タイトル・著者・定価は手入力できます。'+
+      '</div>';
+  }
 }
 
 loadFairs();
