@@ -5,155 +5,472 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>フェア・実績管理</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f5f6f8;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
-header{background:#202936;color:#fff;padding:18px 16px}header h1{margin:0;font-size:21px}header p{margin:5px 0 0;font-size:12px;opacity:.8}
-main{max-width:760px;margin:auto;padding:16px}.screen{display:none}.screen.active{display:block}
+*{box-sizing:border-box}
+body{margin:0;background:#f5f6f8;color:#222;font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+header{background:#202936;color:#fff;padding:18px 16px}
+header h1{margin:0;font-size:21px}
+header p{margin:5px 0 0;font-size:12px;opacity:.8}
+main{max-width:760px;margin:auto;padding:16px}
+.screen{display:none}.screen.active{display:block}
 .card{background:#fff;border-radius:15px;padding:16px;margin-bottom:14px;box-shadow:0 1px 5px #0000000c}
 h2{font-size:18px;margin:0 0 14px}h3{font-size:16px;margin:0 0 6px}
-button,input{font:inherit}button{border:0;border-radius:11px;padding:11px 14px;font-weight:700}
+button,input{font:inherit}
+button{border:0;border-radius:11px;padding:11px 14px;font-weight:700}
 .primary{background:#202936;color:#fff}.light{background:#edf0f3;color:#222}.danger{background:#fff0f0;color:#b42318}
-.full{width:100%;margin-top:10px}.back{background:none;padding:0 0 12px;color:#555}
-label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}input{width:100%;padding:12px;border:1px solid #cfd4db;border-radius:10px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#fff;border-radius:14px;padding:14px}.stat b{display:block;font-size:24px;margin-top:4px}
-.muted{color:#777;font-size:12px}.fair{border:1px solid #e0e3e7;border-radius:13px;padding:14px;margin:10px 0}.fair h3{font-size:17px}
-.book{border:1px solid #e0e3e7;border-radius:12px;padding:13px;margin:10px 0}.title{font-weight:800}.price{font-weight:700;margin-top:5px}
-.row{display:flex;gap:8px;margin-top:10px}.row button{flex:1}.empty{text-align:center;padding:35px 10px;color:#888}
-.history{border-top:1px solid #eee;margin-top:10px;padding-top:10px}.history div{padding:4px 0}
-.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:flex-end}.modal.show{display:flex}
+.full{width:100%;margin-top:10px}
+.back{background:none;padding:0 0 12px;color:#555}
+label{display:block;font-size:13px;font-weight:700;margin:12px 0 6px}
+input{width:100%;padding:12px;border:1px solid #cfd4db;border-radius:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#fff;border-radius:14px;padding:14px}
+.stat b{display:block;font-size:24px;margin-top:4px}
+.muted{color:#777;font-size:12px}
+.fair{border:1px solid #e0e3e7;border-radius:13px;padding:14px;margin:10px 0}
+.book{border:1px solid #e0e3e7;border-radius:12px;padding:13px;margin:10px 0}
+.title{font-weight:800}.price{font-weight:700;margin-top:5px}
+.row{display:flex;gap:8px;margin-top:10px}.row button{flex:1}
+.empty{text-align:center;padding:35px 10px;color:#888}
+.history{border-top:1px solid #eee;margin-top:10px;padding-top:10px}
+.history div{padding:4px 0}
+.modal{display:none;position:fixed;inset:0;background:#0008;z-index:10;align-items:flex-end}
+.modal.show{display:flex}
 .modalbox{background:#fff;width:100%;padding:20px;border-radius:18px 18px 0 0;max-height:90vh;overflow:auto}
 hr{border:0;border-top:1px solid #eee;margin:14px 0}
+.small{font-size:12px}
 </style>
 </head>
+
 <body>
-<header><h1>📋 フェア・実績管理</h1><p>フェアごとに商品と販売実績を管理</p></header>
+<header>
+<h1>📋 フェア・実績管理</h1>
+<p>フェアごとに商品と販売実績を管理</p>
+</header>
+
 <main>
 
 <div id="home" class="screen active">
-  <div class="grid">
-    <div class="stat">フェア数<b id="fairCount">0</b></div>
-    <div class="stat">登録商品<b id="bookCount">0</b></div>
-  </div>
-  <div class="card" style="margin-top:14px">
-    <h2>フェア一覧</h2>
-    <button class="primary full" onclick="openFairModal()">＋ フェアを追加</button>
-    <div id="fairList"></div>
-  </div>
+<div class="grid">
+<div class="stat">フェア数<b id="fairCount">0</b></div>
+<div class="stat">登録商品<b id="bookCount">0</b></div>
+</div>
+
+<div class="card" style="margin-top:14px">
+<h2>フェア一覧</h2>
+<button class="primary full" onclick="openFairModal()">＋ フェアを追加</button>
+<div id="fairList"></div>
+</div>
 </div>
 
 <div id="fair" class="screen">
-  <button class="back" onclick="show('home')">← フェア一覧へ戻る</button>
-  <div class="card">
-    <h2 id="fairName"></h2>
-    <div class="grid">
-      <div class="stat">販売冊数<b id="fairQty">0</b>冊</div>
-      <div class="stat">販売金額<b id="fairAmount">¥0</b></div>
-    </div>
-    <button class="primary full" onclick="openBookModal()">＋ 商品を追加</button>
-    <button class="danger full" onclick="deleteFair()">このフェアを削除</button>
-  </div>
-  <div class="card"><h2>登録商品</h2><div id="bookList"></div></div>
+<button class="back" onclick="show('home')">← フェア一覧へ戻る</button>
+
+<div class="card">
+<h2 id="fairName"></h2>
+
+<div class="grid">
+<div class="stat">販売冊数<b id="fairQty">0</b>冊</div>
+<div class="stat">販売金額<b id="fairAmount">¥0</b></div>
 </div>
 
-<div id="manage" class="screen">
-  <button class="back" onclick="show('home')">← 戻る</button>
-  <div class="card">
-    <h2>ページ（フェア）管理</h2>
-    <p class="muted">フェアを追加・削除できます。商品は各フェアの中から登録します。</p>
-    <button class="primary full" onclick="openFairModal()">＋ フェアを追加</button>
-  </div>
+<button class="primary full" onclick="openBookModal()">＋ 商品を追加</button>
+<button class="danger full" onclick="deleteFair()">このフェアを削除</button>
+</div>
+
+<div class="card">
+<h2>登録商品</h2>
+<div id="bookList"></div>
+</div>
 </div>
 
 </main>
 
-<div class="modal" id="fairModal"><div class="modalbox">
+<div class="modal" id="fairModal">
+<div class="modalbox">
 <h2>フェアを追加</h2>
-<label>フェア名</label><input id="fairInput" placeholder="例：9月映像化フェア">
-<div class="row"><button class="light" onclick="closeModals()">キャンセル</button><button class="primary" onclick="addFair()">追加</button></div>
-</div></div>
+<label>フェア名</label>
+<input id="fairInput" placeholder="例：9月映像化フェア">
 
-<div class="modal" id="bookModal"><div class="modalbox">
-<h2>商品を追加</h2>
-<label>ISBN</label><input id="isbn" inputmode="numeric" placeholder="978xxxxxxxxxx">
+<div class="row">
+<button class="light" onclick="closeModals()">キャンセル</button>
+<button class="primary" onclick="addFair()">追加</button>
+</div>
+</div>
+</div>
+
+<div class="modal" id="bookModal">
+<div class="modalbox">
+<h2 id="bookModalTitle">商品を追加</h2>
+
+<label>ISBN</label>
+<input id="isbn" inputmode="numeric" placeholder="978xxxxxxxxxx">
+
 <button class="light full" onclick="lookup()">ISBNから書籍情報を取得</button>
+
 <div id="preview"></div>
-<label>タイトル（取得できない場合は入力）</label><input id="manualTitle" placeholder="タイトル">
-<label>定価（税込）</label><input id="price" inputmode="numeric" placeholder="例：748">
-<div class="row"><button class="light" onclick="closeModals()">キャンセル</button><button class="primary" onclick="registerBook()">登録</button></div>
-</div></div>
+
+<label>タイトル</label>
+<input id="manualTitle" placeholder="タイトル">
+
+<label>著者</label>
+<input id="author" placeholder="著者名">
+
+<label>定価（税込）</label>
+<input id="price" inputmode="numeric" placeholder="例：748">
+
+<div class="row">
+<button class="light" onclick="closeModals()">キャンセル</button>
+<button class="primary" onclick="registerBook()">登録</button>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const KEY="fairManagerV2";
-let data=JSON.parse(localStorage.getItem(KEY)||'{"fairs":[]}');
-let currentFairId=null,currentBookId=null;
+const SUPABASE_URL="https://eehkwuttgrkigvphkytu.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_S22rkndIu81kmf5DKbB-pQ_J-qw2Bst";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+let currentFairId=null;
+let editingBookId=null;
+let fairs=[];
+let books=[];
+let sales=[];
+
 const $=id=>document.getElementById(id);
-function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function show(id){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");render()}
-function openFairModal(){$("fairModal").classList.add("show");$("fairInput").focus()}
-function openBookModal(){if(!currentFairId)return;$("bookModal").classList.add("show");$("isbn").value="";$("manualTitle").value="";$("price").value="";$("preview").innerHTML=""}
-function closeModals(){document.querySelectorAll(".modal").forEach(x=>x.classList.remove("show"))}
-function addFair(){let n=$("fairInput").value.trim();if(!n){alert("フェア名を入力してください");return}data.fairs.push({id:Date.now(),name:n,createdAt:new Date().toISOString(),books:[]});save();closeModals()}
-function openFair(id){currentFairId=id;show("fair")}
-function currentFair(){return data.fairs.find(f=>f.id===currentFairId)}
-function deleteFair(){let f=currentFair();if(!f)return;if(confirm("「"+f.name+"」を削除しますか？\\n登録した商品と実績も削除されます。")){data.fairs=data.fairs.filter(x=>x.id!==currentFairId);currentFairId=null;save();show("home")}}
-async function lookup(){
- let isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
- if(isbn.length!==13){alert("ISBN-13を入力してください");return}
- $("preview").innerHTML='<p class="muted">書籍情報を取得中…</p>';
- try{
-  let r=await fetch("https://api.openbd.jp/v1/get?isbn="+isbn),j=await r.json(),s=j?.[0]?.summary;
-  if(!s)throw 0;
-  $("manualTitle").value=s.title||"";
-  $("preview").innerHTML='<div class="book"><b>'+esc(s.title||"")+'</b><div class="muted">'+esc(s.author||"")+'</div></div>';
- }catch(e){$("preview").innerHTML='<p class="muted">書籍情報を取得できませんでした。タイトルは手入力できます。</p>'}
+
+function show(id){
+ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));
+ $(id).classList.add("active");
+ render();
 }
-function registerBook(){
- let f=currentFair(),isbn=$("isbn").value.replace(/[^0-9Xx]/g,""),title=$("manualTitle").value.trim(),price=Number($("price").value);
+
+function openFairModal(){
+ $("fairInput").value="";
+ $("fairModal").classList.add("show");
+}
+
+function openBookModal(book=null){
+ editingBookId=book?.id||null;
+ $("bookModalTitle").textContent=book?"商品を編集":"商品を追加";
+ $("isbn").value=book?.isbn||"";
+ $("manualTitle").value=book?.title||"";
+ $("author").value=book?.author||"";
+ $("price").value=book?.price??"";
+ $("preview").innerHTML="";
+ $("bookModal").classList.add("show");
+}
+
+function closeModals(){
+ document.querySelectorAll(".modal").forEach(x=>x.classList.remove("show"));
+ editingBookId=null;
+}
+
+async function loadData(){
+ const [f,b,s]=await Promise.all([
+  db.from("fairs").select("*").order("created_at",{ascending:true}),
+  db.from("books").select("*").order("registered_at",{ascending:true}),
+  db.from("sales").select("*").order("sold_at",{ascending:true})
+ ]);
+
+ if(f.error||b.error||s.error){
+  console.error(f.error||b.error||s.error);
+  alert("データを読み込めませんでした。Supabaseの設定を確認してください。");
+  return;
+ }
+
+ fairs=f.data||[];
+ books=b.data||[];
+ sales=s.data||[];
+ render();
+}
+
+async function addFair(){
+ const name=$("fairInput").value.trim();
+ if(!name){alert("フェア名を入力してください");return}
+
+ const {error}=await db.from("fairs").insert({name});
+
+ if(error){
+  alert("フェアを追加できませんでした\n"+error.message);
+  return;
+ }
+
+ closeModals();
+ await loadData();
+}
+
+function openFair(id){
+ currentFairId=id;
+ show("fair");
+}
+
+function currentFair(){
+ return fairs.find(f=>f.id===currentFairId);
+}
+
+async function deleteFair(){
+ const f=currentFair();
  if(!f)return;
- if(!/^\d{13}$/.test(isbn)){alert("ISBN-13を入力してください");return}
- if(!title){alert("タイトルを入力してください");return}
- if(!Number.isInteger(price)||price<0){alert("定価を入力してください");return}
- if(f.books.some(b=>b.isbn===isbn)){alert("このフェアには同じISBNの商品が登録されています");return}
- f.books.push({id:Date.now(),isbn,title,price,registeredAt:new Date().toISOString(),sales:[]});
- save();closeModals();
+
+ if(!confirm("「"+f.name+"」を削除しますか？\n商品と販売実績も削除されます。"))return;
+
+ const {error}=await db.from("fairs").delete().eq("id",currentFairId);
+
+ if(error){
+  alert("削除できませんでした\n"+error.message);
+  return;
+ }
+
+ currentFairId=null;
+ await loadData();
+ show("home");
 }
-function addSale(bookId){
- let f=currentFair(),b=f.books.find(x=>x.id===bookId);if(!b)return;
- let q=prompt("今回の販売冊数を入力してください","");if(q===null)return;
- q=Number(q);if(!Number.isInteger(q)||q<0){alert("0以上の整数で入力してください");return}
- b.sales.push({qty:q,date:new Date().toISOString()});save()
-}
-function deleteBook(id){
- let f=currentFair();if(confirm("この商品を削除しますか？")){f.books=f.books.filter(b=>b.id!==id);save()}
-}
-function total(b){return b.sales.reduce((a,s)=>a+s.qty,0)}
-function yen(n){return "¥"+n.toLocaleString("ja-JP")}
-function render(){
- $("fairCount").textContent=data.fairs.length;
- $("bookCount").textContent=data.fairs.reduce((a,f)=>a+f.books.length,0);
- $("fairList").innerHTML=data.fairs.length?data.fairs.map(f=>{
-  let qty=f.books.reduce((a,b)=>a+total(b),0),amt=f.books.reduce((a,b)=>a+b.price*total(b),0);
-  return `<div class="fair"><h3>${esc(f.name)}</h3><div class="muted">${f.books.length}商品 ／ 累計 ${qty}冊 ／ ${yen(amt)}</div><button class="primary full" onclick="openFair(${f.id})">このフェアを開く</button></div>`
- }).join(""):'<div class="empty">まだフェアがありません。<br>まずフェアを追加してください。</div>';
- let f=currentFair();
- if(f){
-  $("fairName").textContent=f.name;
-  let qty=f.books.reduce((a,b)=>a+total(b),0),amt=f.books.reduce((a,b)=>a+b.price*total(b),0);
-  $("fairQty").textContent=qty;$("fairAmount").textContent=yen(amt);
-  $("bookList").innerHTML=f.books.length?f.books.map(b=>`
-   <div class="book">
-    <div class="title">${esc(b.title)}</div>
-    <div class="muted">ISBN ${esc(b.isbn)} ／ 登録日 ${date(b.registeredAt)}</div>
-    <div class="price">定価 ${yen(b.price)}　｜　累計 ${total(b)}冊</div>
-    <button class="primary full" onclick="addSale(${b.id})">＋ 販売実績を入力</button>
-    ${b.sales.length?`<div class="history">${b.sales.slice().reverse().map(s=>`<div>${dateTime(s.date)}　${s.qty}冊</div>`).join("")}</div>`:""}
-    <button class="danger full" onclick="deleteBook(${b.id})">商品を削除</button>
-   </div>`).join(""):'<div class="empty">このフェアに商品はまだありません。</div>';
+
+async function lookup(){
+ const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
+
+ if(!/^\d{13}$/.test(isbn)){
+  alert("ISBN-13を入力してください");
+  return;
+ }
+
+ $("preview").innerHTML='<p class="muted">書籍情報を取得中…</p>';
+
+ try{
+  const r=await fetch(
+   "https://www.googleapis.com/books/v1/volumes?q=isbn:"+encodeURIComponent(isbn)
+  );
+  const j=await r.json();
+  const v=j.items?.[0]?.volumeInfo;
+
+  if(!v)throw new Error("not found");
+
+  $("manualTitle").value=v.title||"";
+  $("author").value=(v.authors||[]).join("、");
+
+  const p=v.saleInfo?.listPrice?.amount;
+  if(p!=null)$("price").value=Math.round(p);
+
+  $("preview").innerHTML=
+   '<div class="book"><b>'+esc(v.title||"")+
+   '</b><div class="muted">'+esc((v.authors||[]).join("、"))+
+   '</div></div>';
+
+ }catch(e){
+  $("preview").innerHTML=
+   '<p class="muted">書籍情報を取得できませんでした。タイトル・著者・定価を手入力してください。</p>';
  }
 }
-function date(v){return new Date(v).toLocaleDateString("ja-JP")}
-function dateTime(v){return new Date(v).toLocaleString("ja-JP",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-render();
+
+async function registerBook(){
+ const f=currentFair();
+ if(!f)return;
+
+ const isbn=$("isbn").value.replace(/[^0-9Xx]/g,"");
+ const title=$("manualTitle").value.trim();
+ const author=$("author").value.trim();
+ const price=Number($("price").value);
+
+ if(!/^\d{13}$/.test(isbn)){
+  alert("ISBN-13を入力してください");
+  return;
+ }
+
+ if(!title){
+  alert("タイトルを入力してください");
+  return;
+ }
+
+ if(!Number.isInteger(price)||price<0){
+  alert("定価を入力してください");
+  return;
+ }
+
+ const duplicate=books.some(
+  b=>b.fair_id===f.id&&b.isbn===isbn&&b.id!==editingBookId
+ );
+
+ if(duplicate){
+  alert("このフェアには同じISBNの商品が登録されています");
+  return;
+ }
+
+ if(editingBookId){
+  const {error}=await db.from("books").update({
+   isbn,title,author,price
+  }).eq("id",editingBookId);
+
+  if(error){
+   alert("商品を編集できませんでした\n"+error.message);
+   return;
+  }
+ }else{
+  const {error}=await db.from("books").insert({
+   fair_id:f.id,isbn,title,author,price
+  });
+
+  if(error){
+   alert("商品を登録できませんでした\n"+error.message);
+   return;
+  }
+ }
+
+ closeModals();
+ await loadData();
+}
+
+function getBookSales(bookId){
+ return sales.filter(s=>s.book_id===bookId);
+}
+
+function total(bookId){
+ return getBookSales(bookId).reduce((a,s)=>a+s.quantity,0);
+}
+
+async function addSale(bookId){
+ const q=prompt("今回の販売冊数を入力してください","");
+ if(q===null)return;
+
+ const qty=Number(q);
+
+ if(!Number.isInteger(qty)||qty<0){
+  alert("0以上の整数で入力してください");
+  return;
+ }
+
+ const {error}=await db.from("sales").insert({
+  book_id:bookId,
+  quantity:qty
+ });
+
+ if(error){
+  alert("販売実績を登録できませんでした\n"+error.message);
+  return;
+ }
+
+ await loadData();
+}
+
+async function deleteBook(id){
+ if(!confirm("この商品を削除しますか？"))return;
+
+ const {error}=await db.from("books").delete().eq("id",id);
+
+ if(error){
+  alert("商品を削除できませんでした\n"+error.message);
+  return;
+ }
+
+ await loadData();
+}
+
+function yen(n){
+ return "¥"+Number(n).toLocaleString("ja-JP");
+}
+
+function date(v){
+ return new Date(v).toLocaleDateString("ja-JP");
+}
+
+function dateTime(v){
+ return new Date(v).toLocaleString("ja-JP",{
+  month:"numeric",
+  day:"numeric",
+  hour:"2-digit",
+  minute:"2-digit"
+ });
+}
+
+function esc(s){
+ return String(s??"").replace(/[&<>"']/g,m=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#39;"
+ }[m]));
+}
+
+function render(){
+ $("fairCount").textContent=fairs.length;
+ $("bookCount").textContent=books.length;
+
+ $("fairList").innerHTML=fairs.length
+ ?fairs.map(f=>{
+   const fb=books.filter(b=>b.fair_id===f.id);
+   const qty=fb.reduce((a,b)=>a+total(b.id),0);
+   const amt=fb.reduce((a,b)=>a+b.price*total(b.id),0);
+
+   return `
+   <div class="fair">
+   <h3>${esc(f.name)}</h3>
+   <div class="muted">${fb.length}商品 ／ 累計 ${qty}冊 ／ ${yen(amt)}</div>
+   <button class="primary full" onclick="openFair('${f.id}')">
+   このフェアを開く
+   </button>
+   </div>`;
+ }).join("")
+ :'<div class="empty">まだフェアがありません。<br>まずフェアを追加してください。</div>';
+
+ const f=currentFair();
+ if(!f)return;
+
+ $("fairName").textContent=f.name;
+
+ const fb=books.filter(b=>b.fair_id===f.id);
+ const qty=fb.reduce((a,b)=>a+total(b.id),0);
+ const amt=fb.reduce((a,b)=>a+b.price*total(b.id),0);
+
+ $("fairQty").textContent=qty;
+ $("fairAmount").textContent=yen(amt);
+
+ $("bookList").innerHTML=fb.length
+ ?fb.map(b=>{
+   const bs=getBookSales(b.id);
+
+   return `
+   <div class="book">
+   <div class="title">${esc(b.title)}</div>
+   <div class="muted">
+   ${esc(b.author||"著者未登録")}<br>
+   ISBN ${esc(b.isbn)} ／ 登録日 ${date(b.registered_at)}
+   </div>
+
+   <div class="price">
+   定価 ${yen(b.price)}　｜　累計 ${total(b.id)}冊
+   </div>
+
+   <button class="primary full"
+   onclick='addSale("${b.id}")'>
+   ＋ 販売実績を入力
+   </button>
+
+   <button class="light full"
+   onclick='openBookModal(${JSON.stringify(b).replace(/'/g,"&#39;")})'>
+   商品情報を編集
+   </button>
+
+   ${
+    bs.length
+    ?`<div class="history">${
+      bs.slice().reverse().map(s=>
+       `<div>${dateTime(s.sold_at)}　${s.quantity}冊</div>`
+      ).join("")
+     }</div>`
+    :""
+   }
+
+   <button class="danger full" onclick='deleteBook("${b.id}")'>
+   商品を削除
+   </button>
+   </div>`;
+ }).join("")
+ :'<div class="empty">このフェアに商品はまだありません。</div>';
+}
+
+loadData();
 </script>
+
 </body>
 </html>
