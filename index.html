@@ -147,6 +147,7 @@ $("fairList").innerHTML=fairs.length
 </div>
 <div class="actions">
 <button class="btn" onclick="openFair('${f.id}')">開く</button>
+<button class="btn sub" onclick="editFair('${f.id}')">編集</button>
 <button class="btn danger" onclick="deleteFair('${f.id}')">削除</button>
 </div>
 </div>`).join("")
@@ -187,7 +188,36 @@ if(currentFair?.id===id)showHome();
 
 await loadFairs();
 }
+async function editFair(id){
+  const fair=fairs.find(x=>x.id===id);
+  if(!fair)return;
 
+  const name=prompt("フェア名",fair.name);
+  if(name===null)return;
+
+  const newName=name.trim();
+
+  if(!newName){
+    alert("フェア名を入力してください");
+    return;
+  }
+
+  const {error}=await db.from("fairs")
+    .update({name:newName})
+    .eq("id",id);
+
+  if(error){
+    alert("フェア名を変更できませんでした："+error.message);
+    return;
+  }
+
+  await loadFairs();
+
+  if(currentFair?.id===id){
+    currentFair.name=newName;
+    $("detailName").textContent=newName;
+  }
+}
 async function deleteCurrentFair(){
 if(currentFair)await deleteFair(currentFair.id);
 }
