@@ -1,4 +1,4 @@
-<!doctype html>
+　<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
@@ -126,33 +126,59 @@ if(error){alert("フェアを読み込めませんでした："+error.message);r
 fairs=data||[];
 await renderFairs();
 }
-
 async function renderFairs(){
-$("fairCount").textContent=fairs.length;
-let bc=0;
+  $("fairCount").textContent=fairs.length;
+  let bc=0;
 
-for(const f of fairs){
-const {count}=await db.from("books").select("id",{count:"exact",head:true}).eq("fair_id",f.id);
-bc+=count||0;
-}
+  $("fairList").innerHTML=fairs.length
+  ? await Promise.all(fairs.map(async f=>{
+      // このフェアの商品を取得
+      const {data:books}=await db.from("books")
+        .select("id,price")
+        .eq("fair_id",f.id);
 
-$("bookCount").textContent=bc;
+      const fairBooks=books||[];
+      bc+=fairBooks.length;
 
-$("fairList").innerHTML=fairs.length
-?fairs.map(f=>`
+      // 各商品の「最新の累計販売数」を取得
+      let totalAmount=0;
+
+      for(const b of fairBooks){
+        const {data:sales}=await db.from("sales")
+          .select("quantity")
+          .eq("book_id",b.id)
+          .order("sold_at",{ascending:false})
+          .limit(1);
+
+        const latestQty=sales&&sales.length>0
+          ? Number(sales[0].quantity||0)
+          : 0;
+
+        totalAmount+=latestQty*Number(b.price||0);
+      }
+
+      return `
 <div class="fairrow">
 <div>
 <div class="title">${esc(f.name)}</div>
 <div class="muted">${new Date(f.created_at).toLocaleString("ja-JP")}</div>
+<div style="margin-top:6px">
+<span class="badge">売上 ${yen(totalAmount)}</span>
 </div>
+</div>
+
 <div class="actions">
 <button class="btn" onclick="openFair('${f.id}')">開く</button>
 <button class="btn sub" onclick="editFair('${f.id}')">編集</button>
 <button class="btn danger" onclick="deleteFair('${f.id}')">削除</button>
 </div>
-</div>`).join("")
-:"<div class='muted'>まだフェアがありません。</div>";
+</div>`;
+    })).then(x=>x.join(""))
+  :" <div class='muted'>まだフェアがありません。</div>";
+
+  $("bookCount").textContent=bc;
 }
+";
 
 async function addFair(){
 const name=$("fairName").value.trim();
