@@ -409,8 +409,6 @@ alert("販売数は0以上の整数で入力してください");
 return;
 }
 
-if(q===0)return;
-
 const {error}=await db.from("sales").insert({
 book_id:bookId,
 quantity:q
