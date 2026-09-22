@@ -234,7 +234,7 @@ const {data:sales}=await db.from("sales")
 .eq("book_id",b.id)
 .order("sold_at",{ascending:false});
 
-const q=(sales||[]).reduce((a,x)=>a+Number(x.quantity||0),0);
+const q=(sales&&sales.length>0)?Number(sales[0].quantity||0):0;
 
 totalQ+=q;
 totalA+=q*Number(b.price||0);
@@ -275,8 +275,9 @@ ${history}
 ` : ""}
 
 <div class="salesline">
-<input id="q_${b.id}" class="input" type="number" min="0" value="1">
-<button class="btn sub" onclick="addSale('${b.id}')">今回の販売数を追加</button>
+
+<input id="q_${b.id}" class="input" type="number" min="0" value="${q}">
+<button class="btn sub" onclick="addSale('${b.id}')">累計販売数を登録</button>
 </div>
 </div>
 
